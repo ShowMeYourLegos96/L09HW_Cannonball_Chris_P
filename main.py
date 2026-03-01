@@ -12,7 +12,7 @@ class Cannonball:
     ## Create a new cannonball at the provided x position.
     #  @param x the x position of the ball
     #
-    def init(self, x): #made the init method into a public method 
+    def __init__(self, x): #made the init method into a public method 
         self._x = x
         self._y = 0
         self._vx = 0
@@ -60,13 +60,19 @@ class Cannonball:
             self.move(step, user_grav)
 
         return xs, ys
-    
+#created a crazyball class with a modified move method    
 class CrazyBall(Cannonball):
   
   def move(self, sec,grav ):
       if self.getX() < 400:
           self.rand_q = random.randrange(0,10)
-          
+
+#creating a Print_IFace class that got a HAS-A relationship with the Cannonball class
+class Print_Iface(object):
+    def main_print(self):
+        self.obj1 = Cannonball.shoot()
+        print(self.obj1)
+        
 def run_app():
     st.title("Cannonball Trajectory")
 
