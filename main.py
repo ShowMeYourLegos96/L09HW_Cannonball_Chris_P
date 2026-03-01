@@ -12,7 +12,7 @@ class Cannonball:
     ## Create a new cannonball at the provided x position.
     #  @param x the x position of the ball
     #
-    def __init__(self, x):
+    def init(self, x): #made the init method into a public method 
         self._x = x
         self._y = 0
         self._vx = 0
@@ -60,7 +60,13 @@ class Cannonball:
             self.move(step, user_grav)
 
         return xs, ys
-
+    
+class CrazyBall(Cannonball):
+  
+  def move(self, sec,grav ):
+      if self.getX() < 400:
+          self.rand_q = random.randrange(0,10)
+          
 def run_app():
     st.title("Cannonball Trajectory")
 
