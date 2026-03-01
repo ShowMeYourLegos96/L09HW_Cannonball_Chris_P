@@ -81,7 +81,7 @@ def run_app():
     )
     velocity = st.selectbox("Initial velocity", options=[15, 25, 40], index=1)
 
-    gravity_options = {"Earth": 9.81},{"Moon": 1.62}
+    gravity_options = ({"Earth": 9.81},{"Moon": 1.62})
     gravity_name = st.selectbox("Gravity", options=list(gravity_options.keys()), index=0)
     gravity = gravity_options[gravity_name]
     step = .1
