@@ -8,10 +8,35 @@ import random
 
 ## Represent a cannonball, tracking its position and velocity.
 #
+#creating a Print_IFace class that got a HAS-A relationship with the Cannonball class
+class Print_Interface:
+    def move(self, sec, grav):
+        dx = self._vx * sec
+        dy = self._vy * sec
+
+        self._vy = self._vy - grav * sec
+
+        self._x = self._x + dx
+        self._y = self._y + dy
+
+    def main_print(self, angle, velocity, user_grav, step=0.1):
+     self._vx = velocity * cos(angle)
+     self._vy = velocity * sin(angle)
+     self.move(step, user_grav)
+     xs = []
+     ys = []
+
+     while self.getY() > 1e-14:
+            xs.append(self.getX())
+            ys.append(self.getY())
+            self.move(step, user_grav)
+
+            return xs, ys
 class Cannonball:
     ## Create a new cannonball at the provided x position.
     #  @param x the x position of the ball
     #
+    print_inter = Print_Interface()
     def __init__(self, x): #made the init method into a public method 
         self._x = x
         self._y = 0
@@ -47,10 +72,11 @@ class Cannonball:
     #  @param velocity the initial velocity of the ball
     #
     def shoot(self, angle, velocity, user_grav, step=0.1):
-        self._vx = velocity * cos(angle)
-        self._vy = velocity * sin(angle)
-        self.move(step, user_grav)
-
+        #self._vx = velocity * cos(angle)
+        #self._vy = velocity * sin(angle)
+        #self.move(step, user_grav)
+        
+        self.print_inter.main_print(angle,velocity,user_grav)
         #xs = []
         #ys = []
 
@@ -68,18 +94,7 @@ class CrazyBall(Cannonball):
       if self.getX() < 400:
           self.rand_q = random.randrange(0,10)
 
-#creating a Print_IFace class that got a HAS-A relationship with the Cannonball class
-class Print_Iface:
-    def main_print(self,user_grav,step):
-      xs = []
-      ys = []
 
-      while self.getY() > 1e-14:
-            xs.append(self.getX())
-            ys.append(self.getY())
-            self.move(step, user_grav)
-
-      return xs, ys
 
 def run_app():
     st.title("Cannonball Trajectory")
