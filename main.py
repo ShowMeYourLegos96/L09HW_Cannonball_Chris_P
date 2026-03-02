@@ -51,15 +51,16 @@ class Cannonball:
         self._vy = velocity * sin(angle)
         self.move(step, user_grav)
 
-        xs = []
-        ys = []
+        #xs = []
+        #ys = []
 
-        while self.getY() > 1e-14:
-            xs.append(self.getX())
-            ys.append(self.getY())
-            self.move(step, user_grav)
+        #while self.getY() > 1e-14:
+            #xs.append(self.getX())
+            #ys.append(self.getY())
+            #self.move(step, user_grav)
 
-        return xs, ys
+        #return xs, ys
+    
 #created a crazyball class with a modified move method    
 class CrazyBall(Cannonball):
   
@@ -68,10 +69,17 @@ class CrazyBall(Cannonball):
           self.rand_q = random.randrange(0,10)
 
 #creating a Print_IFace class that got a HAS-A relationship with the Cannonball class
-class Print_Iface(object):
-    def main_print(self):
-        self.obj1 = Cannonball.shoot()
-        print(self.obj1)
+class Print_Iface:
+    def main_print(self,user_grav,step):
+      xs = []
+      ys = []
+
+      while self.getY() > 1e-14:
+            xs.append(self.getX())
+            ys.append(self.getY())
+            self.move(step, user_grav)
+
+      return xs, ys
 
 def run_app():
     st.title("Cannonball Trajectory")
@@ -81,7 +89,7 @@ def run_app():
     )
     velocity = st.selectbox("Initial velocity", options=[15, 25, 40], index=1)
 
-    gravity_options = ({"Earth": 9.81},{"Moon": 1.62})
+    gravity_options = {"Earth": 9.81 , "Moon": 1.62, "Crazy": CrazyBall}
     gravity_name = st.selectbox("Gravity", options=list(gravity_options.keys()), index=0)
     gravity = gravity_options[gravity_name]
     step = .1
