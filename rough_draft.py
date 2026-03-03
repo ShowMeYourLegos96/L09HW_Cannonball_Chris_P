@@ -1,14 +1,13 @@
 from math import sin, cos, radians
-
 import altair as alt
 import pandas as pd
 import streamlit as st
 import random
 
 
-## Represent a cannonball, tracking its position and velocity.
+## Interface class for printing/displaying plot updates
+#  This class handles the "plot updates" functionality via composition
 #
-#creating a Print_IFace class that got a HAS-A relationship with the Cannonball class
 class Print_Iface:
     ## Initialize the print interface
     #
@@ -37,17 +36,19 @@ class Print_Iface:
         return self._plot_points
 
 
+## Represent a cannonball, tracking its position and velocity.
+#  Now with HAS-A Print_Iface for plot updates
+#
 class Cannonball:
     ## Create a new cannonball at the provided x position.
     #  @param x the x position of the ball
     #
-    
-    def __init__(self,x): #made the init method into a public method 
+    def __init__(self, x):
         self._x = x
         self._y = 0
         self._vx = 0
         self._vy = 0
-        self.printer = Print_Iface()
+        self._printer = Print_Iface()  # HAS-A relationship (composition)
 
     ## Move the cannon ball, using its current velocities.
     #  @param sec the amount of time that has elapsed.
@@ -80,28 +81,32 @@ class Cannonball:
     def shoot(self, angle, velocity, user_grav, step=0.1):
         self._vx = velocity * cos(angle)
         self._vy = velocity * sin(angle)
-
-        self.printer.print_update(self._x,self._y,self._vx,self._vy)
+        
+        # Record initial point
+        self._printer.print_update(self._x, self._y, self._vx, self._vy)
         self.move(step, user_grav)
+
         xs = []
         ys = []
 
-        
         while self.getY() > 1e-14:
             xs.append(self.getX())
             ys.append(self.getY())
             
             # Record plot point using composed printer
-            self.printer.print_update(self.getX(), self.getY(), self._vx, self._vy)
+            self._printer.print_update(self.getX(), self.getY(), self._vx, self._vy)
             
             self.move(step, user_grav)
         
         # Record final point
-        self.printer.print_update(self.getX(), self.getY(), self._vx, self._vy)
+        self._printer.print_update(self.getX(), self.getY(), self._vx, self._vy)
 
         return xs, ys
-    
-#created a crazyball class with a modified move method    
+
+
+## Crazyball class - inherits from Cannonball (IS-A relationship)
+#  Adds random trajectory variations
+#
 class Crazyball(Cannonball):
     ## Create a new crazyball at the provided x position.
     #  @param x the x position of the ball
@@ -134,31 +139,57 @@ class Crazyball(Cannonball):
     ## Override shoot method to indicate crazy mode
     #
     def shoot(self, angle, velocity, user_grav, step=0.1):
+        print("\n🎲 CRAZY MODE ACTIVATED - Random trajectory enabled! 🎲")
         return super().shoot(angle, velocity, user_grav, step)
 
 
-
-
 def run_app():
-    st.title("Cannonball Trajectory")
+    st.title("Cannonball Trajectory - Version 2.0")
+    st.markdown("---")
 
     angle_deg = st.number_input(
         "Starting angle (degrees)", min_value=0.0, max_value=90.0, value=45.0
     )
     velocity = st.selectbox("Initial velocity", options=[15, 25, 40], index=1)
 
-    gravity_options = {"Earth": 9.81 , "Moon": 1.62}
+    # Updated gravity options with Moon gravity
+    gravity_options = {
+        "Earth": 9.81,
+        "Moon": 1.62  # Moon's gravity is about 1/6 of Earth's
+    }
+    
+    # Add Crazy mode option
+    simulation_mode = st.radio(
+        "Simulation Mode",
+        options=["Normal", "Crazy"],
+        index=0,
+        help="Crazy mode adds random variations to the trajectory"
+    )
+    
     gravity_name = st.selectbox("Gravity", options=list(gravity_options.keys()), index=0)
     gravity = gravity_options[gravity_name]
-    step = .1
+    step = 0.1
 
     col1, col2 = st.columns(2)
     simulate = col1.button("Simulate")
-    crazy_simulate = col2.button("Crazy Simulate")
+    
+    # Display info about selected mode
+    if simulation_mode == "Crazy":
+        st.info("🎲 Crazy mode selected: Trajectory will have random variations!")
+    if gravity_name == "Moon":
+        st.info("🌕 Moon gravity selected: Ball will travel much farther!")
 
     if simulate:
         angle_rad = radians(angle_deg)
-        ball = Cannonball(0)
+        
+        # Choose ball type based on simulation mode
+        if simulation_mode == "Crazy":
+            ball = Crazyball(0)  # Using inheritance
+            st.write("### 🎲 Crazy Ball Trajectory")
+        else:
+            ball = Cannonball(0)  # Normal ball
+            st.write("### 🎯 Normal Ball Trajectory")
+        
         xs, ys = ball.shoot(angle_rad, velocity, gravity, step)
 
         if not xs:
@@ -167,37 +198,43 @@ def run_app():
 
         df = pd.DataFrame({"x": xs, "y": ys})
 
-        chart = (
-            alt.Chart(df)
-            .mark_line()
-            .encode(
-                x=alt.X("x:Q", scale=alt.Scale(domain=[0, 700]), title="Distance (m)"),
-                y=alt.Y("y:Q", scale=alt.Scale(domain=[0, 300]), title="Height (m)")
-            )
-            .properties(width=700, height=400)
-        )
-        st.altair_chart(chart, use_container_width=True)
-    elif crazy_simulate:
-        angle_rad = radians(angle_deg)
-        ball = Crazyball(0)
-        xs, ys = ball.shoot(angle_rad, velocity, gravity, step)
-
-        if not xs:
-            st.warning("No trajectory points were generated.")
-            return
-
-        df = pd.DataFrame({"x": xs, "y": ys})
+        # Adjust chart domains based on gravity
+        max_x = max(xs) if xs else 200
+        max_y = max(ys) if ys else 100
+        
+        # Add some padding to the domains
+        x_domain = [0, max(200, max_x * 1.1)]
+        y_domain = [0, max(100, max_y * 1.1)]
 
         chart = (
             alt.Chart(df)
             .mark_line()
             .encode(
-                x=alt.X("x:Q", scale=alt.Scale(domain=[0, 700]), title="Distance (m)"),
-                y=alt.Y("y:Q", scale=alt.Scale(domain=[0, 300]), title="Height (m)")
+                x=alt.X("x:Q", scale=alt.Scale(domain=x_domain), title="Distance (m)"),
+                y=alt.Y("y:Q", scale=alt.Scale(domain=y_domain), title="Height (m)")
             )
             .properties(width=700, height=400)
         )
+        
+        # Add points to make crazy trajectory more visible
+        if simulation_mode == "Crazy":
+            points = alt.Chart(df).mark_point(color='red', size=20).encode(
+                x='x:Q',
+                y='y:Q'
+            )
+            chart = chart + points
+        
         st.altair_chart(chart, use_container_width=True)
+        
+        # Display statistics
+        st.write("### 📊 Trajectory Statistics")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Max Height", f"{max(ys):.1f} m")
+        with col2:
+            st.metric("Distance", f"{max(xs):.1f} m")
+        with col3:
+            st.metric("Gravity", f"{gravity} m/s²")
 
 
 if __name__ == "__main__":
